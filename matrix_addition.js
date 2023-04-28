@@ -30,6 +30,18 @@ fn main(
 }
 `;
 
+function humanFriendlyByteSize(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024; // 1 kilobyte equals 1024 bytes
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+
 // Main function
 
 async function init() {
@@ -44,14 +56,28 @@ async function init() {
     throw Error('Couldn\'t request WebGPU adapter.');
   }
 
-  adapter.requestAdapterInfo().then((info)=>{
-    console.log(info)
-    document.write("<h2>Adapter Info</h2>")
-    document.write("<pre>vendor: "+info.vendor+"")
-    document.write("<pre>architecture: "+info.architecture+"</pre>")
-  })
-
   const device = await adapter.requestDevice();
+
+
+  adapter.requestAdapterInfo().then((info)=>{
+    document.write(`<h2>Adapter Info</h2>`);
+    document.write(`<pre>vendor: ${info.vendor}\n`);
+    document.write(`architecture: ${info.architecture}\n`);
+    document.write(`<h3>Limits</h3>`);
+    for (const property in device.limits) {
+      if(property.endsWith("Size")){
+        document.write(`${property}: ${humanFriendlyByteSize(device.limits[property])}\n`);
+      }else{
+        document.write(`${property}: ${device.limits[property]}\n`);
+      }
+      
+    }
+    document.write("</pre>");
+  });
+
+  
+ 
+
 
   // 2: Create a shader module from the shader template literal
   const shaderModule = device.createShaderModule({
