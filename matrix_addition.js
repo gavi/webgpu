@@ -1,6 +1,5 @@
-const rows = 2
-const cols = 2
-
+const rows = 5000
+const cols = 5000
 
 // Define global buffer size
 const BUFFER_SIZE = new Float32Array(rows*cols).byteLength; 
@@ -34,6 +33,7 @@ fn main(
 // Main function
 
 async function init() {
+  const startTime = performance.now();
   // 1: request adapter and device
   if (!navigator.gpu) {
     throw Error('WebGPU not supported.');
@@ -43,6 +43,13 @@ async function init() {
   if (!adapter) {
     throw Error('Couldn\'t request WebGPU adapter.');
   }
+
+  adapter.requestAdapterInfo().then((info)=>{
+    console.log(info)
+    document.write("<h2>Adapter Info</h2>")
+    document.write("<pre>vendor: "+info.vendor+"")
+    document.write("<pre>architecture: "+info.architecture+"</pre>")
+  })
 
   const device = await adapter.requestDevice();
 
@@ -143,7 +150,7 @@ async function init() {
   // 7: Issue commands
   passEncoder.setPipeline(computePipeline);
   passEncoder.setBindGroup(0, bindGroup);
-  passEncoder.dispatchWorkgroups(Math.ceil(BUFFER_SIZE / 64));
+  passEncoder.dispatchWorkgroups(1);//65535
 
   // End the render pass
   passEncoder.end();
@@ -170,9 +177,15 @@ async function init() {
   const copyArrayBuffer = stagingBuffer.getMappedRange(0, BUFFER_SIZE);
   const data = copyArrayBuffer.slice();
   stagingBuffer.unmap();
+  const endTime = performance.now();
   console.log(new Float32Array(data));
+  const executionTime = endTime - startTime;
+  document.write('Execution time: ', executionTime, 'milliseconds');
+  console.log(device)
 }
 
 init().catch((e)=>{
     alert(e)
 });
+
+
